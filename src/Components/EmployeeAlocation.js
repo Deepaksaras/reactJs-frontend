@@ -71,68 +71,46 @@ const EmployeeAlocation = () => {
 
 
 
-
-  const [errors, setErrors] = useState({});
-
+  const currentDateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
   const [formData, setFormData] = useState({
-  
-    Address1: '', State1: '',City1: '',Country1: '', Pincode1: '',
+    AllocatedEmployeeId: '', EmployeeId: '',
+    AllocationDateTime: currentDateTime,
+    AllocatedBy: '414153',
   });
 
 
 
   const handleAllocateEmp = async (e) => {
     e.preventDefault();
-    // Get the current date and time
-    const currentDateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    // Form validation
 
-    console.log(managerId, employeeId);
-    const newErrors = {};
-    if (!managerId) {
-      newErrors.managerid = 'Please select a manager';
-    }
-    if (!employeeId) {
-      newErrors.employeeid = 'Please select an employee';
-    }
+    const errors = validateForm(); // Make sure validateForm() returns validation errors
+    if (Object.keys(errors).length === 0) {
+        try {
+            const response = await axios.post('http://10.10.20.13:5000/allocateemployee', formData);
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+            console.log('API response:', response.data);
+            setshowAllocateEmployeeModal(false);
+            setshowModalSuceess(true);
+            setShowMessage(response.data.message);
+        } catch (error) {
+            console.error('API error:', error);
+            setshowAllocateEmployeeModal(false);
+            setShowModalFailure(true);
+            setShowMessage(error.message || 'An error occurred.');
+        }
+        setFormErrors({});
+      } else {
+        setFormErrors(errors);
+      }
 
-    try {
-      const response = await axios.post('http://10.10.20.13:5000/allocateemployee', {
+    fetchEmployeesAllocation(); // Make sure this function is appropriately defined
+};
 
-        AllocatedEmployeeId: managerId,
-        EmployeeId: employeeId,
-        AllocationDateTime: currentDateTime,
-        AllocatedBy: 414153,
-      });
-
-      // Handle the response here
-      console.log('API response:', response.data);
-      setshowAllocateEmployeeModal(false);
-      setshowModalSuceess(true);
-      setShowMessage(response.data.message)
-
-      // Do something with the response data, such as updating state or showing a success message
-    } catch (error) {
-      // Handle errors here
-      console.error('API error:', error);
-      setshowAllocateEmployeeModal(false);
-      setShowModalFailure(true);
-      setShowMessage(error)
-      // You can set an error state or show an error message to the user
-    }
-    fetchEmployeesAllocation();
-  };
 
 
   const AddEmployeeAllocation = () => {
     setshowAllocateEmployeeModal(true);
-
   }
 
   // Pagination Concept Starts
@@ -163,64 +141,43 @@ const EmployeeAlocation = () => {
   //edit modal 
   const [showEditModal, setShowEditModal] = useState(false);
   const editModalClose = () => setShowEditModal(false);
-  const [srNo, setSrNo] = useState('');
+
   const handleEdit = async (e) => {
     setShowEditModal(true);
-    setManagerId(e.AllocatedEmployeeId);
-    setEmployeeId(e.EmployeeId);
-    setSrNo(e.SrNo);
+
   }
 
- 
-  const handleAllocateEditEmp = async (e) => {
-    e.preventDefault();
-    // Get the current date and time
-    const currentDateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    // Form validation
+  const validateForm = () => {
+    // Reset previous errors
+    const errors = {};
+    // Validate input fields for Step 1
 
-    console.log(managerId, employeeId,srNo);
-
-   
-    const newErrors = {};
-    if (!managerId) {
-      newErrors.managerid = 'Please select a manager';
-    }
-    if (!employeeId) {
-      newErrors.employeeid = 'Please select an employee';
+    if (!formData.AllocatedEmployeeId) {
+      errors.AllocatedEmployeeId = ' is required.';
     }
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
+    if (!formData.EmployeeId) {
+      errors.EmployeeId = ' is required.';
     }
 
-    try {
+    return errors;
 
-      const response = await axios.post(`http://10.10.20.13:5000/employeeallocation/${srNo}`, {
-        AllocatedEmployeeId: managerId,
-        EmployeeId: employeeId,
-        AllocationDateTime: currentDateTime,
-        AllocatedBy: 414153,
-      });
-      
+  }
 
-      // Handle the response here
-      console.log('API response:', response.data);
-      setShowEditModal(false);
-      setshowModalSuceess(true);
-      setShowMessage(response.data.message)
-
-      // Do something with the response data, such as updating state or showing a success message
-    } catch (error) {
-      // Handle errors here
-      console.error('API error:', error);
-      setShowEditModal(false);
-      setShowModalFailure(true);
-      setShowMessage(error)
-      // You can set an error state or show an error message to the user
-    }
-    fetchEmployeesAllocation();
+  const [formErrors, setFormErrors] = useState({});
+  // Handlers to update the form data for each step
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      [name]: value,
+    }));
   };
+
+ 
+
+
+
 
 
 
@@ -331,18 +288,7 @@ const EmployeeAlocation = () => {
                       />
                     </div>
                     <div className="form-group">
-                      <select
-                        className='form-control'
-                        onChange={(e) => setManagerId(e.target.value)}
-                        value={managerId}
-                      >
-                        <option value="">Select Manager</option>
-                        {managerLists.map((managerList) => (
-                          <option key={managerList.EmployeeId} value={managerList.EmployeeId}>
-                            {managerList.Name}
-                          </option>
-                        ))}
-                      </select>
+
                     </div>
                     <div className="form-group">
                       <button type="submit" className="btn btn-primary btn-icon">
@@ -458,66 +404,73 @@ const EmployeeAlocation = () => {
 
       {/* Edit Employee Modal */}
       <Modal show={showEditModal} onHide={editModalClose} className="modal fade">
-      <Modal.Header className="modal-header">
-        <Modal.Title >
-          Edit Modal Data
-        </Modal.Title>
-        <button className="close" type="button" onClick={editModalClose}>
-          <span aria-hidden="true">×</span>
-        </button>
+        <Modal.Header className="modal-header">
+          <Modal.Title >
+            Edit Modal Data
+          </Modal.Title>
+          <button className="close" type="button" onClick={editModalClose}>
+            <span aria-hidden="true">×</span>
+          </button>
         </Modal.Header>
-        <form onSubmit={handleAllocateEditEmp}>
-          <Modal.Body>
-            <div className="modal-body">
-              <div className="form-group">
-              <input type="hidden" name="srNo" value={srNo} />
-                <label>Manager ID</label>
-                
-                <select
-                  className={`form-control ${errors.managerid ? 'is-invalid' : ''}`}
-                  onChange={(e) => setManagerId(e.target.value)}
-                  value={managerId}
-                >
-                  <option value="">Select Manager</option>
-                  {managerLists.map((managerList, i) => (
-                    <option key={i} value={managerList.EmployeeId}>
-                      {managerList.Name}
-                    </option>
-                  ))}
-                </select>
-                {errors.managerid && <div className="invalid-feedback">{errors.managerid}</div>}
-              </div>
 
+        <Modal.Body>
+          <div className="modal-body">
+            <div className="form-group">
+              {/* <input type="hidden" name="srNo" value={srNo} /> */}
+              <label>Manager ID</label>
+              <select
+                className={`form-control ${formErrors.AllocatedEmployeeId ? 'is-invalid' : ''}`}
+                name="AllocatedEmployeeId"
+                value={formData.AllocatedEmployeeId}
+                onChange={handleChange}
+              >
+                <option value="">Select Manager</option>
+                {managerLists.map((managerList, i) => (
+                  <option key={i} value={managerList.EmployeeId}>
+                    {managerList.Name}
+                  </option>
+                ))}
+              </select>
+              {formErrors.AllocatedEmployeeId && <div className="invalid-feedback">{formErrors.AllocatedEmployeeId}</div>}
 
-
-              <div className="form-group">
-                <label>Select Employee</label>
-                <select
-                  className={`form-control ${errors.employeeid ? 'is-invalid' : ''}`}
-                  onChange={(e) => setEmployeeId(e.target.value)}
-                  value={employeeId}
-                >
-                  <option value="">Select Employee</option>
-                  {emplyeeslists.map((emplyeeslist, i) => (
-                    <option key={i} value={emplyeeslist.EmployeeId}>
-                      {emplyeeslist.Name}
-                    </option>
-                  ))}
-                </select>
-                {errors.employeeid && <div className="invalid-feedback">{errors.employeeid}</div>}
-              </div>
             </div>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button className="btn btn-outline-dark" type="button" data-dismiss="modal" onClick={editModalClose}>
-              Cancel
-            </Button>
-            <Button className="btn btn-primary" type="submit">
-              Update Employee
-            </Button>
 
-          </Modal.Footer>
-        </form>
+
+
+            <div className="form-group">
+              <label>Select Employee</label>
+
+
+              <select
+                className={`form-control ${formErrors.EmployeeId ? 'is-invalid' : ''}`}
+                name="EmployeeId"
+                value={formData.EmployeeId}
+                onChange={handleChange}
+              >
+                <option value="">Select Employee</option>
+                {emplyeeslists.map((emplyeeslist, i) => (
+                  <option key={i} value={emplyeeslist.EmployeeId}>
+                    {emplyeeslist.Name}
+                  </option>
+                ))}
+              </select>
+              {formErrors.EmployeeId && <div className="invalid-feedback">{formErrors.EmployeeId}</div>}
+
+
+
+            </div>
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button className="btn btn-outline-dark" type="button" data-dismiss="modal" onClick={editModalClose}>
+            Cancel
+          </Button>
+          <Button className="btn btn-primary" type="submit" >
+            Update Employee
+          </Button>
+
+        </Modal.Footer>
+
       </Modal>
       {/* Edit Employee Modal Ends */}
 
@@ -540,57 +493,67 @@ const EmployeeAlocation = () => {
             <span aria-hidden="true">×</span>
           </button>
         </Modal.Header>
-        <form onSubmit={handleAllocateEmp}>
-          <Modal.Body>
 
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Manager ID</label>
-                <select
-                  className={`form-control ${errors.managerid ? 'is-invalid' : ''}`}
-                  onChange={(e) => setManagerId(e.target.value)}
-                  value={managerId}
-                >
-                  <option value="">Select Manager</option>
-                  {managerLists.map((managerList, i) => (
-                    <option key={i} value={managerList.EmployeeId}>
-                      {managerList.Name}
-                    </option>
-                  ))}
-                </select>
-                {errors.managerid && <div className="invalid-feedback">{errors.managerid}</div>}
-              </div>
+        <Modal.Body>
 
+          <div className="modal-body">
+            <div className="form-group">
+              {/* <input type="hidden" name="srNo" value={srNo} /> */}
+              <label>Manager ID</label>
+              <select
+                className={`form-control ${formErrors.AllocatedEmployeeId ? 'is-invalid' : ''}`}
+                name="AllocatedEmployeeId"
+                value={formData.AllocatedEmployeeId}
+                onChange={handleChange}
+              >
+                <option value="">Select Manager</option>
+                {managerLists.map((managerList, i) => (
+                  <option key={i} value={managerList.EmployeeId}>
+                    {managerList.Name}
+                  </option>
+                ))}
+              </select>
+              {formErrors.AllocatedEmployeeId && <div className="invalid-feedback">{formErrors.AllocatedEmployeeId}</div>}
 
-              <div className="form-group">
-                <label>Select Employee</label>
-                <select
-                  className={`form-control ${errors.employeeid ? 'is-invalid' : ''}`}
-                  onChange={(e) => setEmployeeId(e.target.value)}
-                  value={employeeId}
-                >
-                  <option value="">Select Emplyee</option>
-                  {emplyeeslists.map((emplyeeslist, i) => (
-                    <option key={i} value={emplyeeslist.EmployeeId}>
-                      {emplyeeslist.Name}
-                    </option>
-                  ))}
-                </select>
-                {errors.employeeid && <div className="invalid-feedback">{errors.employeeid}</div>}
-              </div>
             </div>
 
-          </Modal.Body>
-          <Modal.Footer>
-            <Button className="btn btn-outline-dark" type="button" data-dismiss="modal" onClick={allocateEmployeeModalClose}>
-              Cancel
-            </Button>
-            <Button className="btn btn-primary" type="submit">
-              Allocate Employee
-            </Button>
 
-          </Modal.Footer>
-        </form>
+
+            <div className="form-group">
+              <label>Select Employee</label>
+
+
+              <select
+                className={`form-control ${formErrors.EmployeeId ? 'is-invalid' : ''}`}
+                name="EmployeeId"
+                value={formData.EmployeeId}
+                onChange={handleChange}
+              >
+                <option value="">Select Employee</option>
+                {emplyeeslists.map((emplyeeslist, i) => (
+                  <option key={i} value={emplyeeslist.EmployeeId}>
+                    {emplyeeslist.Name}
+                  </option>
+                ))}
+              </select>
+              {formErrors.EmployeeId && <div className="invalid-feedback">{formErrors.EmployeeId}</div>}
+
+
+
+            </div>
+          </div>
+
+        </Modal.Body>
+        <Modal.Footer>
+          <Button className="btn btn-outline-dark" type="button" data-dismiss="modal" onClick={allocateEmployeeModalClose}>
+            Cancel
+          </Button>
+          <Button className="btn btn-primary" type="submit"   onClick={handleAllocateEmp}>
+            Allocate Employee
+          </Button>
+
+        </Modal.Footer>
+
       </Modal>
       {/* Add Employee Modal Ends */}
 
