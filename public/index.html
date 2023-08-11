@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charSet="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content />
+    <meta name="author" content />
+  
+    <link href="%PUBLIC_URL%/css/style.css" rel="stylesheet" />
+    
+    <link href="%PUBLIC_URL%/css/fonts/fonts.css" rel="stylesheet" />
+    <link href="%PUBLIC_URL%/css/iconfont/lnil.css" rel="stylesheet" />
+   
+    <link href="%PUBLIC_URL%/css/calendar/daterangepicker.css" rel="stylesheet" />
+
+
+    
+    <title>React App</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+  </body>
+
+  <script src="%PUBLIC_URL%/vendor/jquery/jquery.min.js"></script> 
+<script src="%PUBLIC_URL%/vendor/bootstrap/js/bootstrap.bundle.min.js"></script> 
+
+<!-- Core plugin JavaScript--> 
+<script src="%PUBLIC_URL%/vendor/jquery-easing/jquery.easing.min.js"></script>
+<script src="%PUBLIC_URL%/vendor/select/bootstrap-select.min.js"></script>
+<script type="text/javascript" src="%PUBLIC_URL%/vendor/date/moment.min.js"></script>
+<script type="text/javascript" src="%PUBLIC_URL%/vendor/date/daterangepicker.min.js"></script>
+
+<script type="text/javascript">
+  $.noConflict(); // Release the $ symbol
+  jQuery(document).ready(function($) {
+    $('input[name="dates"]').daterangepicker();
+    $('input[name="dates1"]').daterangepicker();
+  $('input[name="dateOfBirth"]').daterangepicker({
+    singleDatePicker: true,
+    showDropdowns: true,
+    minYear: 1901,
+    maxYear: parseInt(moment().format('YYYY'),10)
+  }, function(start, end, label) {
+    var years = moment().diff(start, 'years');
+    alert("You are " + years + " years old!");
+  });
+
+   
+     
+  });
+  
+</script>
+
+</html>
